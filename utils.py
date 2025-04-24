@@ -3,7 +3,13 @@ import pytz
 
 def combine_date_time(date_str, time_str, timezone="Asia/Seoul") -> str:
     combined = f"{date_str} {time_str}"
-    dt = datetime.strptime(combined, "%b %d, %Y %H:%M")
+    try:
+        # Try the original format first ("%b %d, %Y %H:%M")
+        dt = datetime.strptime(combined, "%b %d, %Y %H:%M")
+    except ValueError:
+        # If that fails, try the format from the JSON file ("%Y-%m-%d %H:%M")
+        dt = datetime.strptime(combined, "%Y-%m-%d %H:%M")
+    
     local_tz = pytz.timezone(timezone)
     localized_dt = local_tz.localize(dt)
     return localized_dt.isoformat()

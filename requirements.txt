@@ -1,7 +1,9 @@
-fastapi
-uvicorn
-httpx
-python-dotenv
-pytz
-pyngrok
-requests
+fastapi==0.103.1
+uvicorn==0.23.2
+httpx==0.24.1
+pydantic==2.3.0
+python-dotenv==1.0.0
+pytz==2023.3
+python-multipart==0.0.6
+pyngrok==6.0.0
+requests==2.31.0
