@@ -1,85 +1,129 @@
-# Tally Form에서 Notion 데이터베이스로 자동 연동하기
+# Tally-Google Sheets-Notion Integration
 
-이 프로젝트는 Tally Form으로 제출된 데이터를 자동으로 Notion 데이터베이스에 기록하는 웹훅 서버를 제공합니다.
+이 프로젝트는 Tally Form 제출 데이터가 Google Spreadsheet에 저장된 후, 이를 Notion 데이터베이스와 연동하는 자동화 시스템입니다.
 
 ## 기능
 
-- Tally Form 제출 데이터를 Notion 데이터베이스에 자동 기록
-- 백그라운드 비동기 처리로 빠른 응답 보장
-- 다양한 폼 필드와 Notion 속성 간 매핑 지원
-- 실시간 로깅으로 문제 해결 용이
-- 건강 체크 엔드포인트 포함
+- Google Spreadsheet의 Tally Form 응답 데이터를 주기적으로 확인
+- 새로운 응답이 있을 경우 자동으로 Notion 데이터베이스에 동기화
+- 중복 데이터 처리 및 에러 핸들링
 
-## 설치 및 실행 방법
+## 사전 요구사항
 
-### 1. 필요 패키지 설치
+1. Python 3.8 이상
+2. Tally Form 계정 (무료 버전 사용 가능)
+3. Google Cloud Platform 계정 및 프로젝트
+4. Notion API 키
+5. 필요한 Python 패키지 (requirements.txt에 명시)
+
+## 설치 방법
+
+1. 저장소 클론
+
+```bash
+git clone [repository-url]
+cd tally-notion
+```
+
+2. 가상환경 생성 및 활성화
+
+```bash
+conda activate tally
+```
+
+3. 필요한 패키지 설치
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. 환경 변수 설정
+## 설정 방법
 
-`.env` 파일을 생성하고 다음과 같이 설정하세요:
+### 1. Tally Form 설정
 
-```
-NOTION_TOKEN=your_notion_integration_token
-NOTION_DATABASE_ID=your_notion_database_id
-```
+1. Tally Form에서 새로운 폼 생성
+2. Google Sheets 연동 설정:
+   - Tally Form의 'Integrations' 섹션에서 'Google Sheets' 선택
+   - Google 계정으로 로그인
+   - 새로운 스프레드시트 생성 또는 기존 스프레드시트 선택
+   - 응답이 자동으로 스프레드시트에 저장되도록 설정
 
-### 3. 서버 실행
+### 2. Google Sheets API 설정
+
+1. Google Cloud Console에서 프로젝트 생성
+2. Google Sheets API 활성화
+3. 서비스 계정 생성 및 키 다운로드
+4. 다운로드한 키 파일을 프로젝트 루트 디렉토리에 `credentials.json`으로 저장
+5. Tally Form이 데이터를 저장하는 스프레드시트에 서비스 계정 이메일 공유 설정
+   - 스프레드시트 공유 설정에서 서비스 계정 이메일 추가 (편집자 권한)
+
+### 3. Notion API 설정
+
+1. Notion 통합(integration) 생성
+2. API 키 발급
+3. Notion 데이터베이스 생성 및 통합 연결
+4. 환경 변수 설정:
 
 ```bash
-uvicorn app:app --host 0.0.0.0 --port 8000
+export NOTION_API_KEY="your-notion-api-key"
+export NOTION_DATABASE_ID="your-database-id"
+export GOOGLE_SHEET_ID="your-google-sheet-id"
 ```
 
-로컬에서 개발 중일 때는 다음 명령어로 실행하여 파일 변경 시 자동으로 서버가 재시작됩니다:
+## 실행 방법
+
+1. 메인 애플리케이션 실행
 
 ```bash
 python app.py
 ```
 
-## Tally Form 웹훅 설정 방법
+## 프로젝트 구조
 
-1. Tally 대시보드에서 해당 폼의 설정으로 이동
-2. 'Integrations' 섹션에서 'Webhooks' 선택
-3. 'Add Webhook' 클릭
-4. 다음 정보 입력:
-   - Webhook URL: `https://your-server.com/webhook` (서버 주소로 변경)
-   - Trigger: 'On Form Submit' 선택
-   - Payload Format: 'JSON' 선택
-5. 'Save' 클릭
-
-## 서버 배포 방법
-
-### ngrok을 사용한 로컬 테스트
-
-로컬에서 개발 중이나 외부에서 접근 가능한 URL이 필요할 때 ngrok을 사용할 수 있습니다:
-
-```bash
-ngrok http 8000
+```
+tally-notion/
+├── app.py                 # 메인 애플리케이션
+├── google_sheets.py       # Google Sheets API 클라이언트
+├── notion_client.py       # Notion API 클라이언트
+├── process_data.py        # 데이터 처리 로직
+├── utils.py              # 유틸리티 함수
+├── models.py             # 데이터 모델
+└── requirements.txt      # 프로젝트 의존성
 ```
 
-이 명령어를 실행하면 외부에서 접근 가능한 URL이 생성됩니다. 이 URL을 Tally의 웹훅 URL로 설정하세요.
+## 데이터 흐름
 
-### 클라우드 서비스에 배포
-
-- Heroku, DigitalOcean, AWS 등의 클라우드 서비스에 배포할 수 있습니다.
-- Gunicorn이나 다른 WSGI/ASGI 서버를 사용하여 프로덕션 환경에서 실행하는 것을 권장합니다.
-
-## JSON 파일 처리하기
-
-이전에 구현한 JSON 파일 처리 기능도 여전히 사용 가능합니다:
-
-```bash
-python process_json.py response/your_json_file.json
-```
+1. Tally Form 제출 → Google Spreadsheet 자동 저장
+2. 주기적으로 Google Spreadsheet 확인
+3. 새로운 데이터 발견 시 → Notion 데이터베이스 동기화
 
 ## 문제 해결
 
-- 로그 파일 `tally_webhook.log`를 확인하여 오류 정보를 확인하세요.
-- `/health` 엔드포인트에 GET 요청을 보내 서버 상태를 확인할 수 있습니다.
+1. Google Sheets API 오류
+
+   - credentials.json 파일이 올바른 위치에 있는지 확인
+   - 서비스 계정 권한 확인
+   - 스프레드시트 ID가 올바른지 확인
+
+2. Notion API 오류
+   - API 키가 올바른지 확인
+   - 데이터베이스 ID가 올바른지 확인
+   - 통합이 데이터베이스에 연결되어 있는지 확인
+
+## 보안 고려사항
+
+1. API 키와 인증 정보는 환경 변수로 관리
+2. 서비스 계정 키 파일은 .gitignore에 포함
+3. 스프레드시트 접근 권한 관리
+
+## 기여 방법
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## 라이선스
 
-MIT
+MIT License
